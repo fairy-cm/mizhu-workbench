@@ -1,0 +1,202 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #fff5f8;
+  --bg-soft: #ffe8ef;
+  --surface: #fffafc;
+  --pink: #f5a8be;
+  --pink-deep: #e889a4;
+  --pink-soft: #fbd0dc;
+  --cream: #fff1e6;
+  --yellow: #f6e7a8;
+  --ink: #4a3540;
+  --muted: #9a7a86;
+  --success: #7eb89a;
+  --shadow: 0 10px 30px rgba(232, 137, 164, 0.18);
+  --radius: 1.25rem;
+  --font-display: var(--font-nunito), "Segoe UI", sans-serif;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-soft: var(--bg-soft);
+  --color-surface: var(--surface);
+  --color-pink: var(--pink);
+  --color-pink-deep: var(--pink-deep);
+  --color-pink-soft: var(--pink-soft);
+  --color-cream: var(--cream);
+  --color-yellow: var(--yellow);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --font-sans: var(--font-nunito);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -10%, #ffe0ea 0%, transparent 55%),
+    radial-gradient(ellipse 70% 40% at 100% 0%, #ffe9c8 0%, transparent 50%),
+    linear-gradient(180deg, var(--bg) 0%, #fff8fb 100%);
+  background-attachment: fixed;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.cute-card {
+  background: color-mix(in srgb, var(--surface) 92%, white);
+  border: 1px solid color-mix(in srgb, var(--pink-soft) 70%, white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.cute-btn {
+  appearance: none;
+  border: none;
+  border-radius: 999px;
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(135deg, var(--pink) 0%, var(--pink-deep) 100%);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(232, 137, 164, 0.35);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.cute-btn:hover {
+  filter: brightness(1.03);
+  transform: translateY(-1px);
+}
+
+.cute-btn:active {
+  transform: translateY(1px);
+}
+
+.cute-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cute-btn.secondary {
+  background: white;
+  color: var(--pink-deep);
+  border: 1.5px solid var(--pink-soft);
+  box-shadow: none;
+}
+
+.cute-input {
+  width: 100%;
+  border: 1.5px solid var(--pink-soft);
+  border-radius: 1rem;
+  padding: 0.8rem 1rem;
+  background: white;
+  color: var(--ink);
+  outline: none;
+}
+
+.cute-input:focus {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pink) 25%, transparent);
+}
+
+@keyframes wobble {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(-8deg) scale(1.05);
+  }
+  50% {
+    transform: rotate(8deg) scale(1.08);
+  }
+  75% {
+    transform: rotate(-4deg) scale(1.03);
+  }
+}
+
+@keyframes bounce-hug {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(18px);
+  }
+}
+
+@keyframes shake-fart {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-6px) rotate(3deg);
+  }
+  60% {
+    transform: translateY(4px) rotate(-3deg);
+  }
+}
+
+@keyframes pinch {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(0.9, 1.08);
+  }
+  70% {
+    transform: scale(1.06, 0.94);
+  }
+}
+
+.anim-spank {
+  animation: wobble 0.55s ease;
+}
+
+.anim-fart {
+  animation: shake-fart 0.6s ease;
+}
+
+.anim-pinch {
+  animation: pinch 0.55s ease;
+}
+
+.anim-hug-left {
+  animation: bounce-hug 0.7s ease;
+}
+
+.anim-hug-right {
+  animation: bounce-hug 0.7s ease reverse;
+}
+
+.grain::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  background-image: radial-gradient(#4a3540 0.6px, transparent 0.6px);
+  background-size: 4px 4px;
+}

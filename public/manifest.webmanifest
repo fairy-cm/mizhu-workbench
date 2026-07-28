@@ -1,0 +1,24 @@
+{
+  "name": "咪猪工作台",
+  "short_name": "咪猪",
+  "description": "情侣日常工作台：便便记录、咪猪互动、英语学习、备忘录",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF5F8",
+  "theme_color": "#F5A8BE",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

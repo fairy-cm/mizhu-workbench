@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { IconFriends, IconGlobe, IconHeart, IconMemo, IconPoop } from "@/components/NavIcons";
+import { UserAvatar } from "@/components/UserAvatar";
+import { IconFriends, IconGlobe, IconHeart, IconMemo, IconPoop, IconProfile } from "@/components/NavIcons";
 
 const NAV = [
   { href: "/poop", label: "便便记录", Icon: IconPoop },
@@ -11,6 +12,7 @@ const NAV = [
   { href: "/english", label: "英语学习", Icon: IconGlobe },
   { href: "/memo", label: "备忘录", Icon: IconMemo },
   { href: "/friends", label: "好友与情侣", Icon: IconFriends },
+  { href: "/profile", label: "个人资料", Icon: IconProfile },
 ] as const;
 
 type Props = {
@@ -48,25 +50,18 @@ export function Sidebar({ open, onClose }: Props) {
           >
             ×
           </button>
-          <div className="relative mt-2 flex items-center gap-3 pr-10">
-            <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-pink-soft ring-2 ring-white">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={myRole === "zhu" ? "/characters/zhu.svg" : "/characters/mi.svg"}
-                alt="avatar"
-                className="h-12 w-12"
-              />
-            </div>
+          <Link href="/profile" onClick={onClose} className="relative mt-2 flex items-center gap-3 pr-10">
+            <UserAvatar profile={profile} role={myRole} size={56} />
             <div>
               <div className="text-lg font-extrabold text-ink">{profile?.display_name ?? "未完善资料"}</div>
-              <div className="text-sm text-muted">咪猪工作台</div>
+              <div className="text-sm text-muted">点此编辑资料</div>
               {profile?.username ? (
                 <div className="text-xs text-pink-deep">@{profile.username}</div>
               ) : (
                 <div className="text-xs text-muted">请先完善用户名</div>
               )}
             </div>
-          </div>
+          </Link>
         </div>
 
         <nav className="flex-1 space-y-2 overflow-y-auto px-4 py-2">

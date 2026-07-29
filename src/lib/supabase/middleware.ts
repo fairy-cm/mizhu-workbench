@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { authCookieOptions } from "@/lib/supabase/cookieOptions";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -12,6 +13,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   const supabase = createServerClient(url, key, {
+    cookieOptions: authCookieOptions,
     cookies: {
       getAll() {
         return request.cookies.getAll();
@@ -19,11 +21,14 @@ export async function updateSession(request: NextRequest) {
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         supabaseResponse = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options));
+        cookiesToSet.forEach(({ name, value, options }) =>
+          supabaseResponse.cookies.set(name, value, { ...authCookieOptions, ...options })
+        );
       },
     },
   });
 
+  // Refresh session if expired — keeps login alive via refresh token
   const {
     data: { user },
   } = await supabase.auth.getUser();

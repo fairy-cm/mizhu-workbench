@@ -55,15 +55,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!configured) return;
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
+
+    const syncUser = async () => {
+      // Prefer getUser (validates/refreshes) so long-lived sessions stay alive
+      const { data } = await supabase.auth.getUser();
       setUser(data.user ?? null);
       setReady(true);
-    });
+    };
+
+    void syncUser();
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setReady(true);
     });
-    return () => sub.subscription.unsubscribe();
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void syncUser();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+
+    return () => {
+      sub.subscription.unsubscribe();
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
   }, [configured]);
 
   useEffect(() => {

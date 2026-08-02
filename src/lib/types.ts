@@ -51,6 +51,18 @@ export type Interaction = {
   created_at: string;
 };
 
+export type CoupleMessage = {
+  id: string;
+  couple_id: string;
+  sender_id: string;
+  audio_path: string;
+  duration_sec: number;
+  created_at: string;
+  audio_url?: string;
+};
+
+export type IdleScene = "nuzzle" | "snack" | "sleep" | "read" | "hold" | "feed";
+
 export type Memo = {
   id: string;
   user_id: string;

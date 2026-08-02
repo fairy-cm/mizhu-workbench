@@ -200,3 +200,78 @@ a {
   background-image: radial-gradient(#4a3540 0.6px, transparent 0.6px);
   background-size: 4px 4px;
 }
+
+@keyframes scene-float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-6px) scale(1.02);
+  }
+}
+
+@keyframes scene-breathe {
+  0%,
+  100% {
+    filter: drop-shadow(0 8px 12px rgba(232, 137, 164, 0.18));
+  }
+  50% {
+    filter: drop-shadow(0 14px 18px rgba(232, 137, 164, 0.28));
+  }
+}
+
+@keyframes action-pop {
+  0% {
+    transform: scale(0.86) rotate(-2deg);
+    opacity: 0.4;
+  }
+  35% {
+    transform: scale(1.08) rotate(1.5deg);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(0.98) rotate(-0.5deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes action-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.04);
+  }
+  70% {
+    transform: scale(0.97);
+  }
+}
+
+@keyframes sparkle {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+.scene-idle {
+  animation: scene-float 2.8s ease-in-out infinite, scene-breathe 2.8s ease-in-out infinite;
+}
+
+.scene-action {
+  animation: action-pop 0.55s ease-out, action-pulse 0.9s ease-in-out 0.55s 2;
+}
+
+.scene-sparkle {
+  animation: sparkle 1.2s ease-in-out infinite;
+}

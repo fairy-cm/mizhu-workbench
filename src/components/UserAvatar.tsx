@@ -3,8 +3,8 @@
 import type { CoupleRole, Profile } from "@/lib/types";
 
 const PRESETS = {
-  mi: "/characters/mi.svg",
-  zhu: "/characters/zhu.svg",
+  mi: "/characters/interact/portrait_mi.png",
+  zhu: "/characters/interact/portrait_zhu.png",
 } as const;
 
 type Props = {

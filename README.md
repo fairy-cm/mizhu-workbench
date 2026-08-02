@@ -60,7 +60,10 @@ npm install
 ### 2. 配置 Supabase
 
 1. 在 [supabase.com](https://supabase.com) 创建项目  
-2. SQL Editor 中执行 [`supabase/migrations/001_init.sql`](supabase/migrations/001_init.sql)  
+2. SQL Editor 中依次执行：
+   - [`supabase/migrations/001_init.sql`](supabase/migrations/001_init.sql)
+   - [`supabase/migrations/002_avatar_profile.sql`](supabase/migrations/002_avatar_profile.sql)
+   - [`supabase/migrations/003_couple_messages.sql`](supabase/migrations/003_couple_messages.sql)（情侣留言语音）  
 3. Project Settings → API 复制 **Project URL** 与 **anon public** key  
 4. 复制环境变量文件并填写：
 

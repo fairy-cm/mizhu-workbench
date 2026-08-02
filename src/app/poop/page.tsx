@@ -3,15 +3,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useAuth } from "@/components/AuthProvider";
+import { PoopBarChart } from "@/components/PoopBarChart";
 import { createClient } from "@/lib/supabase/client";
-import { countPoops, formatTime } from "@/lib/poopStats";
+import { countPoops, formatTime, naturalMonthWeeklyBars, naturalWeekDailyBars } from "@/lib/poopStats";
 import type { PoopLog, Profile } from "@/lib/types";
 
 function StatGrid({ title, stats }: { title: string; stats: ReturnType<typeof countPoops> }) {
   const items = [
     { label: "今日", value: stats.today },
-    { label: "近一周", value: stats.week },
-    { label: "近一月", value: stats.month },
+    { label: "本周", value: stats.week },
+    { label: "本月", value: stats.month },
     { label: "累计", value: stats.total },
   ];
   return (
@@ -67,6 +68,8 @@ export default function PoopPage() {
 
   const myStats = useMemo(() => countPoops(mine), [mine]);
   const partnerStats = useMemo(() => countPoops(partner), [partner]);
+  const weekBars = useMemo(() => naturalWeekDailyBars(mine, partner), [mine, partner]);
+  const monthBars = useMemo(() => naturalMonthWeeklyBars(mine, partner), [mine, partner]);
   const todayMine = useMemo(() => {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
@@ -92,6 +95,8 @@ export default function PoopPage() {
     setBusy(false);
   }
 
+  const partnerName = partnerProfile?.display_name ?? "对方";
+
   return (
     <AppShell title="便便记录">
       <div className="space-y-4">
@@ -102,10 +107,23 @@ export default function PoopPage() {
 
         <StatGrid title="我的统计" stats={myStats} />
         {partnerId ? (
-          <StatGrid title={`${partnerProfile?.display_name ?? "情侣"}的统计`} stats={partnerStats} />
+          <StatGrid title={`${partnerName}的统计`} stats={partnerStats} />
         ) : (
-          <p className="rounded-2xl bg-pink-soft/40 px-4 py-3 text-sm text-muted">绑定情侣后可查看对方排便情况</p>
+          <p className="rounded-2xl bg-pink-soft/40 px-4 py-3 text-sm text-muted">绑定情侣后可查看对方排便情况与对比图</p>
         )}
+
+        <PoopBarChart
+          title="本周每日（周一～周日）"
+          points={weekBars}
+          partnerLabel={partnerName}
+          showPartner={Boolean(partnerId)}
+        />
+        <PoopBarChart
+          title="本月每周合计"
+          points={monthBars}
+          partnerLabel={partnerName}
+          showPartner={Boolean(partnerId)}
+        />
 
         <section className="cute-card p-4">
           <h2 className="mb-3 text-base font-extrabold">今日明细</h2>

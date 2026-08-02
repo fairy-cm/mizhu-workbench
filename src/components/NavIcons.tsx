@@ -56,3 +56,13 @@ export function IconProfile({ active }: { active?: boolean }) {
     </svg>
   );
 }
+
+export function IconDiary({ active }: { active?: boolean }) {
+  const c = active ? "currentColor" : "#9a7a86";
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M6 3.5h10.5A2.5 2.5 0 0 1 19 6v14.5H8A2.5 2.5 0 0 1 5.5 18V5.5" stroke={c} strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M8 7.5h7M8 11h7M8 14.5h4.5" stroke={c} strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}

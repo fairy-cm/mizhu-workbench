@@ -4,10 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { UserAvatar } from "@/components/UserAvatar";
-import { IconFriends, IconGlobe, IconHeart, IconMemo, IconPoop, IconProfile } from "@/components/NavIcons";
+import { IconDiary, IconFriends, IconGlobe, IconHeart, IconMemo, IconPoop, IconProfile } from "@/components/NavIcons";
 
 const NAV = [
   { href: "/poop", label: "便便记录", Icon: IconPoop },
+  { href: "/diary", label: "生活日记", Icon: IconDiary },
   { href: "/interact", label: "咪猪互动", Icon: IconHeart },
   { href: "/english", label: "英语学习", Icon: IconGlobe },
   { href: "/memo", label: "备忘录", Icon: IconMemo },

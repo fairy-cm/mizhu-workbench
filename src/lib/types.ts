@@ -63,6 +63,37 @@ export type CoupleMessage = {
 
 export type IdleScene = "nuzzle" | "snack" | "sleep" | "read" | "hold" | "feed";
 
+export const LIFE_DIARY_TAGS = [
+  "上班",
+  "做饭",
+  "逛街",
+  "运动",
+  "喂狗",
+  "喂猫",
+  "旅游",
+  "玩游戏",
+  "做手工",
+  "自我学习",
+  "爱爱",
+  "吵架",
+  "生病",
+  "难受",
+] as const;
+
+export type LifeDiaryTag = (typeof LIFE_DIARY_TAGS)[number];
+
+export type LifeDiary = {
+  id: string;
+  user_id: string;
+  diary_date: string;
+  tags: string[];
+  note: string;
+  image_paths: string[];
+  created_at: string;
+  updated_at: string;
+  image_urls?: string[];
+};
+
 export type Memo = {
   id: string;
   user_id: string;

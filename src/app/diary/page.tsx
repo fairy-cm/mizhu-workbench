@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useAuth } from "@/components/AuthProvider";
+import { compressImageUnderSize } from "@/lib/compressImage";
 import { createClient } from "@/lib/supabase/client";
 import { LIFE_DIARY_TAGS, type LifeDiary, type Profile } from "@/lib/types";
 
@@ -20,6 +21,17 @@ function yearStartStr(d = new Date()) {
   return `${d.getFullYear()}-01-01`;
 }
 
+/** 滚动近 365 天的起始日期（含今天） */
+function rollingYearFromStr(d = new Date()) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  x.setDate(x.getDate() - 364);
+  const y = x.getFullYear();
+  const m = String(x.getMonth() + 1).padStart(2, "0");
+  const day = String(x.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function errMessage(err: unknown) {
   if (err instanceof Error && err.message) return err.message;
   if (typeof err === "object" && err && "message" in err) {
@@ -27,6 +39,13 @@ function errMessage(err: unknown) {
     if (m) return m;
   }
   return "操作失败";
+}
+
+function notePreview(note: string, maxLines = 2) {
+  const lines = note.trim().split(/\r?\n/).filter(Boolean);
+  if (lines.length === 0) return "";
+  const head = lines.slice(0, maxLines).join("\n");
+  return lines.length > maxLines || note.trim().length > head.length ? `${head}…` : head;
 }
 
 async function withSignedUrls(entries: LifeDiary[]) {
@@ -68,18 +87,18 @@ export default function DiaryPage() {
   const [mineList, setMineList] = useState<LifeDiary[]>([]);
   const [partnerList, setPartnerList] = useState<LifeDiary[]>([]);
   const [partnerProfile, setPartnerProfile] = useState<Profile | null>(null);
-  const [partnerDate, setPartnerDate] = useState(todayStr);
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [detail, setDetail] = useState<LifeDiary | null>(null);
+  const [lightbox, setLightbox] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const loadLists = useCallback(async () => {
     if (!user) return;
     const supabase = createClient();
-    const year = new Date().getFullYear();
-    const from = `${year}-01-01`;
+    const from = rollingYearFromStr();
 
     const { data: mine, error: mineErr } = await supabase
       .from("life_diaries")
@@ -156,11 +175,6 @@ export default function DiaryPage() {
   const mineYearCounts = useMemo(() => yearTagCounts(mineList), [mineList]);
   const partnerYearCounts = useMemo(() => yearTagCounts(partnerList), [partnerList]);
 
-  const partnerDay = useMemo(
-    () => partnerList.find((e) => e.diary_date === partnerDate) ?? null,
-    [partnerList, partnerDate]
-  );
-
   function toggleTag(tag: string) {
     setTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
   }
@@ -177,10 +191,10 @@ export default function DiaryPage() {
       const nextPaths = [...imagePaths];
       const nextUrls = [...imageUrls];
 
-      for (const file of picked) {
-        if (!file.type.startsWith("image/")) throw new Error("请选择图片文件");
-        if (file.size > 5 * 1024 * 1024) throw new Error("单张图片请小于 5MB");
-        const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+      for (const raw of picked) {
+        if (!raw.type.startsWith("image/")) throw new Error("请选择图片文件");
+        const file = await compressImageUnderSize(raw, 5 * 1024 * 1024);
+        const ext = file.name.split(".").pop() || "jpg";
         const path = `${user.id}/${date}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
         const { error: upErr } = await supabase.storage.from("life-diary").upload(path, file, {
           contentType: file.type,
@@ -197,6 +211,7 @@ export default function DiaryPage() {
       }
       setImagePaths(nextPaths);
       setImageUrls(nextUrls);
+      setOk("图片已压缩并上传（单张 ≤ 5MB）");
     } catch (err) {
       setError(errMessage(err));
     } finally {
@@ -243,7 +258,7 @@ export default function DiaryPage() {
         if (insErr) throw insErr;
         setEntryId(data?.id ?? null);
       }
-      setOk("已保存今日生活日记");
+      setOk("已保存生活日记");
       await loadLists();
       await loadDay();
     } catch (err) {
@@ -275,6 +290,11 @@ export default function DiaryPage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  function openMineRecord(entry: LifeDiary) {
+    setDate(entry.diary_date);
+    setDetail(entry);
   }
 
   return (
@@ -341,7 +361,7 @@ export default function DiaryPage() {
               </label>
 
               <div className="space-y-2">
-                <div className="text-sm font-bold">图片（最多 2 张）</div>
+                <div className="text-sm font-bold">图片（最多 2 张，自动压缩到 5MB 内）</div>
                 <div className="flex flex-wrap gap-2">
                   {imageUrls.map((url, i) => (
                     <div key={url + i} className="relative h-24 w-24 overflow-hidden rounded-2xl bg-cream">
@@ -371,7 +391,7 @@ export default function DiaryPage() {
                   disabled={uploading || imagePaths.length >= 2}
                   onClick={() => fileRef.current?.click()}
                 >
-                  {uploading ? "上传中…" : imagePaths.length >= 2 ? "已满 2 张" : "上传图片"}
+                  {uploading ? "压缩并上传中…" : imagePaths.length >= 2 ? "已满 2 张" : "上传图片"}
                 </button>
               </div>
 
@@ -392,96 +412,183 @@ export default function DiaryPage() {
 
             <YearStats title={`${new Date().getFullYear()} 年标签次数（我的）`} counts={mineYearCounts} />
 
-            <section className="cute-card p-4">
-              <h2 className="mb-3 font-extrabold">今年记录</h2>
-              {mineList.length === 0 ? (
-                <p className="text-sm text-muted">还没有日记</p>
-              ) : (
-                <ul className="space-y-2">
-                  {mineList.slice(0, 30).map((e) => (
-                    <li key={e.id}>
-                      <button
-                        type="button"
-                        className="w-full rounded-xl bg-cream/70 px-3 py-2 text-left"
-                        onClick={() => setDate(e.diary_date)}
-                      >
-                        <div className="text-sm font-bold">{e.diary_date}</div>
-                        <div className="text-xs text-muted">{e.tags.join(" · ") || "无标签"}</div>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+            <RecordList
+              title="近一年生活记录"
+              empty="近一年还没有日记"
+              entries={mineList}
+              onOpen={openMineRecord}
+              onPreviewImage={setLightbox}
+            />
           </>
         ) : (
           <>
-            <section className="cute-card space-y-3 p-4">
-              <p className="text-sm text-muted">只读查看，不能修改对方日记</p>
-              <label className="block space-y-1.5">
-                <span className="text-sm font-bold">日期</span>
-                <input
-                  className="cute-input"
-                  type="date"
-                  value={partnerDate}
-                  max={todayStr()}
-                  onChange={(e) => setPartnerDate(e.target.value)}
-                />
-              </label>
-              {!partnerDay ? (
-                <p className="text-sm text-muted">这一天对方还没有记录</p>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex flex-wrap gap-2">
-                    {partnerDay.tags.map((tag) => (
-                      <span key={tag} className="rounded-full bg-pink-soft px-3 py-1 text-sm font-bold text-pink-deep">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                  {partnerDay.note ? <p className="text-sm leading-relaxed text-ink">{partnerDay.note}</p> : null}
-                  {partnerDay.image_urls?.length ? (
-                    <div className="flex flex-wrap gap-2">
-                      {partnerDay.image_urls.map((url) => (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img key={url} src={url} alt="" className="h-28 w-28 rounded-2xl object-cover" />
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              )}
-            </section>
-
-            <YearStats
-              title={`${new Date().getFullYear()} 年标签次数（Ta）`}
-              counts={partnerYearCounts}
+            <YearStats title={`${new Date().getFullYear()} 年标签次数（Ta）`} counts={partnerYearCounts} />
+            <RecordList
+              title="Ta 的近一年生活记录（只读）"
+              empty="对方近一年还没有日记"
+              entries={partnerList}
+              onOpen={setDetail}
+              onPreviewImage={setLightbox}
             />
-
-            <section className="cute-card p-4">
-              <h2 className="mb-3 font-extrabold">Ta 今年记录</h2>
-              {partnerList.length === 0 ? (
-                <p className="text-sm text-muted">对方还没有日记</p>
-              ) : (
-                <ul className="space-y-2">
-                  {partnerList.slice(0, 30).map((e) => (
-                    <li key={e.id}>
-                      <button
-                        type="button"
-                        className="w-full rounded-xl bg-cream/70 px-3 py-2 text-left"
-                        onClick={() => setPartnerDate(e.diary_date)}
-                      >
-                        <div className="text-sm font-bold">{e.diary_date}</div>
-                        <div className="text-xs text-muted">{e.tags.join(" · ") || "无标签"}</div>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
           </>
         )}
       </div>
+
+      {detail ? (
+        <DetailModal
+          entry={detail}
+          readOnly={tab === "partner" || detail.user_id !== user?.id}
+          onClose={() => setDetail(null)}
+          onEdit={() => {
+            setDate(detail.diary_date);
+            setDetail(null);
+            setTab("mine");
+          }}
+          onPreviewImage={setLightbox}
+        />
+      ) : null}
+
+      {lightbox ? (
+        <button
+          type="button"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-ink/70 p-4"
+          onClick={() => setLightbox(null)}
+          aria-label="关闭大图"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={lightbox} alt="" className="max-h-[85vh] max-w-full rounded-2xl object-contain" />
+        </button>
+      ) : null}
     </AppShell>
+  );
+}
+
+function RecordList({
+  title,
+  empty,
+  entries,
+  onOpen,
+  onPreviewImage,
+}: {
+  title: string;
+  empty: string;
+  entries: LifeDiary[];
+  onOpen: (e: LifeDiary) => void;
+  onPreviewImage: (url: string) => void;
+}) {
+  return (
+    <section className="cute-card p-4">
+      <h2 className="mb-3 font-extrabold">{title}</h2>
+      {entries.length === 0 ? (
+        <p className="text-sm text-muted">{empty}</p>
+      ) : (
+        <ul className="space-y-3">
+          {entries.map((e) => {
+            const preview = notePreview(e.note || "");
+            return (
+              <li key={e.id}>
+                <button
+                  type="button"
+                  className="w-full rounded-2xl bg-cream/70 px-3 py-3 text-left transition hover:bg-cream"
+                  onClick={() => onOpen(e)}
+                >
+                  <div className="text-sm font-extrabold text-ink">{e.diary_date}</div>
+                  <div className="mt-1 text-xs font-bold text-pink-deep">{e.tags.join(" · ") || "无标签"}</div>
+                  {preview ? (
+                    <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-muted">{preview}</p>
+                  ) : (
+                    <p className="mt-1 text-xs text-muted">无备注</p>
+                  )}
+                  {e.image_urls?.length ? (
+                    <div className="mt-2 flex gap-2" onClick={(ev) => ev.stopPropagation()}>
+                      {e.image_urls.map((url) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          key={url}
+                          src={url}
+                          alt=""
+                          className="h-16 w-16 rounded-xl object-cover"
+                          onClick={() => onPreviewImage(url)}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                  <div className="mt-2 text-[11px] font-bold text-pink-deep">点卡片看全文与大图</div>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function DetailModal({
+  entry,
+  readOnly,
+  onClose,
+  onEdit,
+  onPreviewImage,
+}: {
+  entry: LifeDiary;
+  readOnly: boolean;
+  onClose: () => void;
+  onEdit: () => void;
+  onPreviewImage: (url: string) => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-ink/40 p-3 sm:items-center" onClick={onClose}>
+      <div
+        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-[#fffafc] p-5 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-3 flex items-start justify-between gap-2">
+          <div>
+            <h3 className="text-lg font-extrabold">{entry.diary_date}</h3>
+            {readOnly ? <p className="text-xs text-muted">只读</p> : null}
+          </div>
+          <button type="button" className="rounded-full bg-cream px-3 py-1 text-sm font-bold" onClick={onClose}>
+            关闭
+          </button>
+        </div>
+        <div className="mb-3 flex flex-wrap gap-2">
+          {entry.tags.length ? (
+            entry.tags.map((tag) => (
+              <span key={tag} className="rounded-full bg-pink-soft px-3 py-1 text-sm font-bold text-pink-deep">
+                {tag}
+              </span>
+            ))
+          ) : (
+            <span className="text-sm text-muted">无标签</span>
+          )}
+        </div>
+        {entry.note ? (
+          <p className="mb-3 whitespace-pre-wrap text-sm leading-relaxed text-ink">{entry.note}</p>
+        ) : (
+          <p className="mb-3 text-sm text-muted">无备注</p>
+        )}
+        {entry.image_urls?.length ? (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {entry.image_urls.map((url) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={url}
+                src={url}
+                alt=""
+                className="h-36 w-36 cursor-zoom-in rounded-2xl object-cover"
+                onClick={() => onPreviewImage(url)}
+              />
+            ))}
+          </div>
+        ) : null}
+        {!readOnly ? (
+          <button type="button" className="cute-btn w-full" onClick={onEdit}>
+            编辑这一天
+          </button>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
